@@ -4,17 +4,17 @@ import base64
 import hashlib
 import binascii
 from cryptography.fernet import Fernet
-import config
+import settings
 
 
 def _fernet() -> Fernet:
     try:
-        raw = base64.urlsafe_b64decode(config.ENC_KEY)
+        raw = base64.urlsafe_b64decode(settings.ENC_KEY)
     except (binascii.Error, ValueError) as e:
         raise ValueError(f"ENC_KEY не base64: {e}")
     if len(raw) != 32:
         raise ValueError("ENC_KEY должен быть 32-байтным")
-    return Fernet(config.ENC_KEY.encode())
+    return Fernet(settings.ENC_KEY.encode())
 
 
 def encrypt_to(path: str, data) -> None:
