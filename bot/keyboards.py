@@ -12,6 +12,7 @@ def main_panel(is_admin: bool = False, subscribed: bool = False) -> ReplyKeyboar
         kb.append([KeyboardButton(text="🔑 Активировать ключ")])
     else:
         kb.append([KeyboardButton(text="📮 Добавить свою почту")])
+        kb.append([KeyboardButton(text="🗑 Удалить почту")])
         kb.append([KeyboardButton(text="📨 Начать рассылку")])
         kb.append([KeyboardButton(text="📊 Статус")])
         kb.append([KeyboardButton(text="🎫 Моя подписка")])
@@ -25,12 +26,11 @@ def admin_panel() -> ReplyKeyboardMarkup:
         [KeyboardButton(text="🚀 Админ рассылка")],
         [KeyboardButton(text="🔑 Генерировать ключ")],
         [KeyboardButton(text="📡 Каналы подписки")],
-        [KeyboardButton(text="➕ Добавить функцию")],
-        [KeyboardButton(text="➕ Добавить команду")],
         [KeyboardButton(text="➕ Добавить почту")],
+        [KeyboardButton(text="🗑 Удалить почту")],
+        [KeyboardButton(text="🆘 Помочь юзеру")],
         [KeyboardButton(text="➕ Добавить админа")],
         [KeyboardButton(text="📊 Общая статистика")],
-        [KeyboardButton(text="👥 Список админов")],
         [KeyboardButton(text="⬅️ Назад")],
     ]
     return ReplyKeyboardMarkup(keyboard=kb, resize_keyboard=True)
@@ -57,13 +57,6 @@ def accounts_kb(accs: dict, prefix: str) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(inline_keyboard=rows)
 
 
-def confirm_kb(cb_start: str = "confirm:yes") -> InlineKeyboardMarkup:
-    return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="✅ Запустить", callback_data=cb_start),
-         InlineKeyboardButton(text="❌ Отмена", callback_data="cancel")],
-    ])
-
-
 def msg_count_kb(prefix: str = "cnt") -> InlineKeyboardMarkup:
     row1 = [InlineKeyboardButton(text=str(n), callback_data=f"{prefix}:{n}") for n in (1, 2, 3, 5)]
     row2 = [InlineKeyboardButton(text=str(n), callback_data=f"{prefix}:{n}") for n in (7, 10, 15, 20)]
@@ -71,11 +64,14 @@ def msg_count_kb(prefix: str = "cnt") -> InlineKeyboardMarkup:
 
 
 def duration_kb() -> InlineKeyboardMarkup:
-    rows = [
+    return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="Часы", callback_data="unit:hours"),
          InlineKeyboardButton(text="Дни", callback_data="unit:days")],
         [InlineKeyboardButton(text="Месяцы", callback_data="unit:months"),
          InlineKeyboardButton(text="Годы", callback_data="unit:years")],
         [InlineKeyboardButton(text="♾ Навсегда", callback_data="unit:forever")],
-    ]
-    return InlineKeyboardMarkup(inline_keyboard=rows)
+    ])
+
+
+def admin_panel_with_help() -> ReplyKeyboardMarkup:
+    return admin_panel()
