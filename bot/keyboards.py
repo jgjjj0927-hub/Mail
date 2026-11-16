@@ -71,7 +71,3 @@ def duration_kb() -> InlineKeyboardMarkup:
          InlineKeyboardButton(text="Годы", callback_data="unit:years")],
         [InlineKeyboardButton(text="♾ Навсегда", callback_data="unit:forever")],
     ])
-
-
-def admin_panel_with_help() -> ReplyKeyboardMarkup:
-    return admin_panel()
