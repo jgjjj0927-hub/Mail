@@ -1,26 +1,23 @@
 import time
-import os
 from typing import Optional
-
-import config
+import settings
 from core import crypto
 
 DURATION_UNITS = {
     "hours": 3600,
     "days": 86400,
-    "months": 2592000,   # 30 дней
-    "years": 31536000,   # 365 дней
+    "months": 2592000,
+    "years": 31536000,
     "forever": None,
 }
 
 
-# ---------- каналы ----------
 def load_channels() -> list[dict]:
-    return crypto.decrypt_from(config.CHANNELS_FILE, [])
+    return crypto.decrypt_from(settings.CHANNELS_FILE, [])
 
 
 def save_channels(items: list[dict]) -> None:
-    crypto.encrypt_to(config.CHANNELS_FILE, items)
+    crypto.encrypt_to(settings.CHANNELS_FILE, items)
 
 
 def add_channel(title: str, link: str, chat_id: str) -> None:
@@ -29,22 +26,12 @@ def add_channel(title: str, link: str, chat_id: str) -> None:
     save_channels(items)
 
 
-def remove_channel(chat_id: str) -> bool:
-    items = load_channels()
-    new = [c for c in items if str(c["chat_id"]) != str(chat_id)]
-    if len(new) == len(items):
-        return False
-    save_channels(new)
-    return True
-
-
-# ---------- одноразовые ключи ----------
 def load_keys() -> dict:
-    return crypto.decrypt_from(config.KEYS_FILE, {})
+    return crypto.decrypt_from(settings.KEYS_FILE, {})
 
 
 def save_keys(data: dict) -> None:
-    crypto.encrypt_to(config.KEYS_FILE, data)
+    crypto.encrypt_to(settings.KEYS_FILE, data)
 
 
 def create_key(unit: str, amount: int, created_by: int) -> str:
@@ -66,27 +53,12 @@ def create_key(unit: str, amount: int, created_by: int) -> str:
     return raw
 
 
-def revoke_key(raw: str) -> bool:
-    h = crypto.hash_key(raw)
-    keys = load_keys()
-    if h in keys:
-        del keys[h]
-        save_keys(keys)
-        return True
-    return False
-
-
-def list_keys() -> dict:
-    return load_keys()
-
-
-# ---------- подписки ----------
 def load_subs() -> dict:
-    return crypto.decrypt_from(config.SUBS_FILE, {})
+    return crypto.decrypt_from(settings.SUBS_FILE, {})
 
 
 def save_subs(data: dict) -> None:
-    crypto.encrypt_to(config.SUBS_FILE, data)
+    crypto.encrypt_to(settings.SUBS_FILE, data)
 
 
 def has_active_sub(user_id: int) -> bool:
@@ -100,8 +72,7 @@ def has_active_sub(user_id: int) -> bool:
 
 
 def get_sub_info(user_id: int) -> Optional[dict]:
-    subs = load_subs()
-    return subs.get(str(user_id))
+    return load_subs().get(str(user_id))
 
 
 def activate_key(user_id: int, raw_key: str) -> dict:
@@ -131,5 +102,4 @@ def activate_key(user_id: int, raw_key: str) -> dict:
     entry["used_at"] = now
     keys[h] = entry
     save_keys(keys)
-
     return subs[str(user_id)]
