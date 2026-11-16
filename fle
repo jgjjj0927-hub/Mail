@@ -1,12 +1,23 @@
-(venv) C:\Users\User\Mail-main>python run_all.py
-[bot] started pid=5612
-[gui] started pid=10552
 Traceback (most recent call last):
-  File "<frozen runpy>", line 198, in _run_module_as_main
-  File "<frozen runpy>", line 88, in _run_code
-  File "C:\Users\User\Mail-main\bot\bot.py", line 24, in <module>
-    bot = Bot(token=config.BOT_TOKEN)
-                    ^^^^^^^^^^^^^^^^
-AttributeError: module 'config' has no attribute 'BOT_TOKEN'
-[bot] exited with code 1
-shutting down...
+  File "<string>", line 1, in <module>
+ModuleNotFoundError: No module named 'config'
+
+(venv) C:\Users\User\Mail-main>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
