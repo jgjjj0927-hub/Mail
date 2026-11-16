@@ -28,7 +28,7 @@ def create_access(target_uid: int, admin_uid: int, hours: int = 1) -> str:
     return raw
 
 
-def redeem_access(raw: str, admin_uid: int) -> dict | None:
+def redeem_access(raw: str, admin_uid: int):
     h = crypto.hash_key(raw.strip())
     data = _load()
     entry = data.get(h)
@@ -46,7 +46,7 @@ def redeem_access(raw: str, admin_uid: int) -> dict | None:
     return entry
 
 
-def active_access(admin_uid: int) -> dict | None:
+def active_access(admin_uid: int):
     data = _load()
     now = time.time()
     for h, e in data.items():
