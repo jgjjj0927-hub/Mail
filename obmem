@@ -1,0 +1,17 @@
+C:\Users\User\Mail-main>python main.py bot
+Traceback (most recent call last):
+  File "C:\Users\User\Mail-main\bot\bot.py", line 17, in <module>
+    import config
+  File "C:\Users\User\Mail-main\config.py", line 25, in <module>
+    raise RuntimeError("BOT_TOKEN не задан в .env")
+RuntimeError: BOT_TOKEN не задан в .env
+Traceback (most recent call last):
+  File "C:\Users\User\Mail-main\main.py", line 21, in <module>
+    run_bot()
+  File "C:\Users\User\Mail-main\main.py", line 13, in run_bot
+    subprocess.run([sys.executable, os.path.join(BASE, "bot", "bot.py")], check=True)
+  File "C:\Users\User\AppData\Local\Programs\Python\Python311\Lib\subprocess.py", line 569, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['C:\\Users\\User\\Mail-main\\venv\\Scripts\\python.exe', 'C:\\Users\\User\\Mail-main\\bot\\bot.py']' returned non-zero exit status 1.
+
+(venv) C:\Users\User\Mail-mai
