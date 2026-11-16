@@ -1,45 +1,29 @@
 import os
-import json
-import base64
-import hashlib
-import binascii
-from cryptography.fernet import Fernet
 import settings
+from core import crypto
 
 
-def _fernet() -> Fernet:
-    try:
-        raw = base64.urlsafe_b64decode(settings.ENC_KEY)
-    except (binascii.Error, ValueError) as e:
-        raise ValueError(f"ENC_KEY не base64: {e}")
-    if len(raw) != 32:
-        raise ValueError("ENC_KEY должен быть 32-байтным")
-    return Fernet(settings.ENC_KEY.encode())
+def _path() -> str:
+    os.makedirs(settings.DATA_DIR, exist_ok=True)
+    return os.path.join(settings.DATA_DIR, "accounts.json.enc")
 
 
-def encrypt_to(path: str, data) -> None:
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    raw = json.dumps(data, ensure_ascii=False, indent=2).encode("utf-8")
-    tmp = path + ".tmp"
-    with open(tmp, "wb") as f:
-        f.write(_fernet().encrypt(raw))
-    os.replace(tmp, path)
+def load_accounts() -> dict:
+    return crypto.decrypt_from(_path(), {})
 
 
-def decrypt_from(path: str, default):
-    if not os.path.exists(path):
-        return default
-    try:
-        with open(path, "rb") as f:
-            raw = _fernet().decrypt(f.read())
-        return json.loads(raw.decode("utf-8"))
-    except Exception:
-        return default
+def save_accounts(accounts: dict) -> None:
+    crypto.encrypt_to(_path(), accounts)
 
 
-def hash_key(key: str) -> str:
-    return hashlib.sha256(key.encode("utf-8")).hexdigest()
+def add_account(owner_id: int, email: str, app_password: str) -> None:
+    accs = load_accounts()
+    accs[email] = {"owner_id": owner_id, "email": email, "app_password": app_password}
+    save_accounts(accs)
 
 
-def gen_key() -> str:
-    return base64.urlsafe_b64encode(os.urandom(18)).decode("ascii").rstrip("=")
+def get_accounts(owner_id: int = None) -> dict:
+    accs = load_accounts()
+    if owner_id is None:
+        return accs
+    return {k: v for k, v in accs.items() if v["owner_id"] == owner_id}
