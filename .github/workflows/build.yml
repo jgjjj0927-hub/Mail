@@ -37,11 +37,13 @@ jobs:
           mode: onefile
           enable-plugins: tk-inter
           windows-icon-from-ico: icon/icon.ico
-          include-data-dir: core=core
-          include-data-file: .env=.env
-          include-data-dir: bot=bot
-          include-data-dir: gui=gui
-          include-data-file: icon/icon.ico=icon.ico
+          include-data-dir: |
+            core=core
+            bot=bot
+            gui=gui
+          include-data-file: |
+            .env=.env
+            icon/icon.ico=icon.ico
           output-dir: build
           company-name: He
           product-name: Stamp
