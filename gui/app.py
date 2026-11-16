@@ -15,9 +15,16 @@ class StampGUI(tk.Tk):
         self.geometry("840x680")
         self.configure(bg=PALETTE["bg"])
         self._current_user = None
+
+        icon_path = os.path.join(os.path.dirname(sys.argv[0]), "icon.ico")
+        if os.path.exists(icon_path):
+            try:
+                self.iconbitmap(icon_path)
+            except Exception:
+                pass
+
         self._build()
 
-    # ---------- helpers ----------
     def _neon_entry(self, parent, show=None):
         return tk.Entry(
             parent, bg=PALETTE["bg_soft"], fg=PALETTE["text"],
@@ -41,7 +48,6 @@ class StampGUI(tk.Tk):
             fg=color or PALETTE["text"], font=font or FONT_MAIN
         )
 
-    # ---------- screens ----------
     def _build(self):
         self._clear()
         if not self._current_user:
@@ -55,7 +61,6 @@ class StampGUI(tk.Tk):
         for w in self.winfo_children():
             w.destroy()
 
-    # ---------- login ----------
     def _screen_login(self):
         frame = tk.Frame(self, bg=PALETTE["bg"])
         frame.pack(expand=True)
@@ -113,7 +118,6 @@ class StampGUI(tk.Tk):
         messagebox.showinfo("Stamp", f"Ключ активирован. До: {until}")
         self._build()
 
-    # ---------- subscription gate ----------
     def _screen_sub_gate(self):
         frame = tk.Frame(self, bg=PALETTE["bg"])
         frame.pack(expand=True)
@@ -129,7 +133,6 @@ class StampGUI(tk.Tk):
         glow_button_style(btn, PALETTE["neon_lime"])
         btn.pack(ipady=8, ipadx=20)
 
-    # ---------- main screen ----------
     def _screen_main(self):
         header = tk.Frame(self, bg=PALETTE["bg"])
         header.pack(fill="x", padx=20, pady=(16, 8))
