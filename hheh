@@ -1,156 +1,105 @@
-import smtplib
-import ssl
 import time
-import json
-import os
-import threading
-import html as html_lib
-import re
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-from email.utils import formataddr
-from typing import Callable, Optional
+from typing import Optional
 import settings
+from core import crypto
 
-_stats_lock = threading.Lock()
-
-SMTP_MAP = {
-    "gmail.com":   ("smtp.gmail.com", 587, False),
-    "yandex.ru":   ("smtp.yandex.ru", 465, True),
-    "mail.ru":     ("smtp.mail.ru", 465, True),
-    "outlook.com": ("smtp.office365.com", 587, False),
-    "yahoo.com":   ("smtp.mail.yahoo.com", 587, False),
+DURATION_UNITS = {
+    "hours": 3600,
+    "days": 86400,
+    "months": 2592000,
+    "years": 31536000,
+    "forever": None,
 }
 
 
-def _resolve_host(email: str):
-    domain = email.split("@")[-1].lower()
-    return SMTP_MAP.get(domain, (f"smtp.{domain}", 587, False))
+def load_channels() -> list[dict]:
+    return crypto.decrypt_from(settings.CHANNELS_FILE, [])
 
 
-def _stats_path() -> str:
-    os.makedirs(settings.DATA_DIR, exist_ok=True)
-    return os.path.join(settings.DATA_DIR, "stats.json")
+def save_channels(items: list[dict]) -> None:
+    crypto.encrypt_to(settings.CHANNELS_FILE, items)
 
 
-def _load_stats() -> dict:
-    p = _stats_path()
-    with _stats_lock:
-        if not os.path.exists(p):
-            return {"sent": 0, "failed": 0, "active": False, "last": ""}
-        try:
-            with open(p, "r", encoding="utf-8") as f:
-                data = json.load(f)
-            return {
-                "sent": int(data.get("sent", 0)),
-                "failed": int(data.get("failed", 0)),
-                "active": bool(data.get("active", False)),
-                "last": data.get("last", ""),
-            }
-        except Exception:
-            return {"sent": 0, "failed": 0, "active": False, "last": ""}
+def add_channel(title: str, link: str, chat_id: str) -> None:
+    items = load_channels()
+    items.append({"title": title, "link": link, "chat_id": chat_id})
+    save_channels(items)
 
 
-def _save_stats(stats: dict) -> None:
-    p = _stats_path()
-    with _stats_lock:
-        tmp = p + ".tmp"
-        with open(tmp, "w", encoding="utf-8") as f:
-            json.dump(stats, f, ensure_ascii=False, indent=2)
-        os.replace(tmp, p)
+def load_keys() -> dict:
+    return crypto.decrypt_from(settings.KEYS_FILE, {})
 
 
-def _html_to_text(body: str) -> str:
-    text = re.sub(r"<br\s*/?>", "\n", body, flags=re.I)
-    text = re.sub(r"</p>", "\n\n", text, flags=re.I)
-    text = re.sub(r"<[^>]+>", "", text)
-    return html_lib.unescape(text).strip()
+def save_keys(data: dict) -> None:
+    crypto.encrypt_to(settings.KEYS_FILE, data)
 
 
-def _connect(email: str, app_password: str):
-    host, port, use_ssl = _resolve_host(email)
-    ctx = ssl.create_default_context()
-    if use_ssl:
-        server = smtplib.SMTP_SSL(host, port, timeout=settings.SMTP_TIMEOUT, context=ctx)
+def create_key(unit: str, amount: int, created_by: int) -> str:
+    if unit not in DURATION_UNITS:
+        raise ValueError("Неверная единица срока")
+    raw = crypto.gen_key()
+    h = crypto.hash_key(raw)
+    keys = load_keys()
+    keys[h] = {
+        "unit": unit,
+        "amount": int(amount),
+        "used": False,
+        "used_by": None,
+        "used_at": None,
+        "created_by": created_by,
+        "created_at": time.time(),
+    }
+    save_keys(keys)
+    return raw
+
+
+def load_subs() -> dict:
+    return crypto.decrypt_from(settings.SUBS_FILE, {})
+
+
+def save_subs(data: dict) -> None:
+    crypto.encrypt_to(settings.SUBS_FILE, data)
+
+
+def has_active_sub(user_id: int) -> bool:
+    subs = load_subs()
+    rec = subs.get(str(user_id))
+    if not rec:
+        return False
+    if rec.get("until") is None:
+        return True
+    return rec["until"] > time.time()
+
+
+def get_sub_info(user_id: int) -> Optional[dict]:
+    return load_subs().get(str(user_id))
+
+
+def activate_key(user_id: int, raw_key: str) -> dict:
+    h = crypto.hash_key(raw_key.strip())
+    keys = load_keys()
+    entry = keys.get(h)
+    if not entry:
+        raise ValueError("Ключ не найден")
+    if entry["used"]:
+        raise ValueError("Ключ уже использован")
+
+    now = time.time()
+    subs = load_subs()
+    current = subs.get(str(user_id), {"until": now})
+    base = current["until"] if current["until"] and current["until"] > now else now
+
+    if entry["unit"] == "forever":
+        until = None
     else:
-        server = smtplib.SMTP(host, port, timeout=settings.SMTP_TIMEOUT)
-        server.ehlo()
-        server.starttls(context=ctx)
-        server.ehlo()
-    server.login(email, app_password)
-    return server
+        until = base + DURATION_UNITS[entry["unit"]] * entry["amount"]
 
+    subs[str(user_id)] = {"until": until, "activated_at": now}
+    save_subs(subs)
 
-def send_bulk(
-    from_email: str,
-    app_password: str,
-    recipients: list[str],
-    subject: str,
-    body_html: str,
-    body_text: Optional[str] = None,
-    progress: Optional[Callable[[int, int], None]] = None,
-) -> dict:
-    stats = _load_stats()
-    stats["active"] = True
-    stats["last"] = time.strftime("%Y-%m-%d %H:%M:%S")
-    _save_stats(stats)
-
-    body_text = body_text or _html_to_text(body_html)
-    ok, fail = 0, 0
-    total = len(recipients)
-
-    try:
-        server = _connect(from_email, app_password)
-    except Exception as e:
-        stats["active"] = False
-        _save_stats(stats)
-        raise RuntimeError(f"SMTP login failed: {e}")
-
-    for idx, rcpt in enumerate(recipients, start=1):
-        msg = MIMEMultipart("alternative")
-        msg["From"] = formataddr(("Stamp", from_email))
-        msg["To"] = rcpt
-        msg["Subject"] = subject
-        msg.attach(MIMEText(body_text, "plain", "utf-8"))
-        msg.attach(MIMEText(body_html, "html", "utf-8"))
-
-        sent = False
-        for attempt in range(3):
-            try:
-                server.sendmail(from_email, [rcpt], msg.as_string())
-                sent = True
-                break
-            except smtplib.SMTPServerDisconnected:
-                try:
-                    server = _connect(from_email, app_password)
-                except Exception:
-                    pass
-            except Exception:
-                time.sleep(1 + attempt)
-
-        if sent:
-            ok += 1
-            stats["sent"] += 1
-        else:
-            fail += 1
-            stats["failed"] += 1
-
-        _save_stats(stats)
-        if progress:
-            try:
-                progress(idx, total)
-            except Exception:
-                pass
-        time.sleep(settings.SEND_DELAY)
-
-    try:
-        server.quit()
-    except Exception:
-        pass
-    stats["active"] = False
-    _save_stats(stats)
-    return {"sent": ok, "failed": fail, "total": total}
-
-
-def get_status() -> dict:
-    return _load_stats()
+    entry["used"] = True
+    entry["used_by"] = user_id
+    entry["used_at"] = now
+    keys[h] = entry
+    save_keys(keys)
+    return subs[str(user_id)]
