@@ -5,7 +5,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from core import accounts, mailer, templates, subscriptions, crypto
 from core.neon import PALETTE, FONT_MAIN, FONT_TITLE, FONT_MONO, glow_button_style
-import config
+import settings
 
 
 class StampGUI(tk.Tk):
