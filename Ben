@@ -1,1 +1,1 @@
-python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+8VVchLvdKLV8-4yVn1xmtgCaGbOFVY1gu4dOAMCTXFk=
