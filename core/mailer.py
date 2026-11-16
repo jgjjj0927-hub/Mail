@@ -10,17 +10,15 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.utils import formataddr
 from typing import Callable, Optional
-import config
+import settings
 
 _stats_lock = threading.Lock()
 
 SMTP_MAP = {
     "gmail.com":   ("smtp.gmail.com", 587, False),
     "yandex.ru":   ("smtp.yandex.ru", 465, True),
-    "yandex.com":  ("smtp.yandex.com", 465, True),
     "mail.ru":     ("smtp.mail.ru", 465, True),
     "outlook.com": ("smtp.office365.com", 587, False),
-    "hotmail.com": ("smtp.office365.com", 587, False),
     "yahoo.com":   ("smtp.mail.yahoo.com", 587, False),
 }
 
@@ -31,8 +29,8 @@ def _resolve_host(email: str):
 
 
 def _stats_path() -> str:
-    os.makedirs(config.DATA_DIR, exist_ok=True)
-    return os.path.join(config.DATA_DIR, "stats.json")
+    os.makedirs(settings.DATA_DIR, exist_ok=True)
+    return os.path.join(settings.DATA_DIR, "stats.json")
 
 
 def _load_stats() -> dict:
@@ -73,22 +71,14 @@ def _connect(email: str, app_password: str):
     host, port, use_ssl = _resolve_host(email)
     ctx = ssl.create_default_context()
     if use_ssl:
-        server = smtplib.SMTP_SSL(host, port, timeout=config.SMTP_TIMEOUT, context=ctx)
+        server = smtplib.SMTP_SSL(host, port, timeout=settings.SMTP_TIMEOUT, context=ctx)
     else:
-        server = smtplib.SMTP(host, port, timeout=config.SMTP_TIMEOUT)
+        server = smtplib.SMTP(host, port, timeout=settings.SMTP_TIMEOUT)
         server.ehlo()
         server.starttls(context=ctx)
         server.ehlo()
     server.login(email, app_password)
     return server
-
-
-def validate_login(email: str, app_password: str) -> None:
-    server = _connect(email, app_password)
-    try:
-        server.quit()
-    except Exception:
-        pass
 
 
 def send_bulk(
@@ -151,7 +141,7 @@ def send_bulk(
                 progress(idx, total)
             except Exception:
                 pass
-        time.sleep(config.SEND_DELAY)
+        time.sleep(settings.SEND_DELAY)
 
     try:
         server.quit()
