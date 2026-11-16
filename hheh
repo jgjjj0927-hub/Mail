@@ -1,20 +1,45 @@
-C:\Users\User\Mail-main\core\accounts.py:7:    os.makedirs(config.DATA_DIR, exist_ok=True)
-C:\Users\User\Mail-main\core\accounts.py:8:    return os.path.join(config.DATA_DIR, "accounts.json.enc")
-C:\Users\User\Mail-main\core\crypto.py:12:        raw = base64.urlsafe_b64decode(config.ENC_KEY)
-C:\Users\User\Mail-main\core\crypto.py:17:    return Fernet(config.ENC_KEY.encode())
-C:\Users\User\Mail-main\core\mailer.py:34:    os.makedirs(config.DATA_DIR, exist_ok=True)
-C:\Users\User\Mail-main\core\mailer.py:35:    return os.path.join(config.DATA_DIR, "stats.json")
-C:\Users\User\Mail-main\core\mailer.py:76:        server = smtplib.SMTP_SSL(host, port, timeout=config.SMTP_TIMEOUT, context=ctx)
-C:\Users\User\Mail-main\core\mailer.py:78:        server = smtplib.SMTP(host, port, timeout=config.SMTP_TIMEOUT)
-C:\Users\User\Mail-main\core\mailer.py:154:        time.sleep(config.SEND_DELAY)
-C:\Users\User\Mail-main\core\subscriptions.py:19:    return crypto.decrypt_from(config.CHANNELS_FILE, [])
-C:\Users\User\Mail-main\core\subscriptions.py:23:    crypto.encrypt_to(config.CHANNELS_FILE, items)
-C:\Users\User\Mail-main\core\subscriptions.py:43:    return crypto.decrypt_from(config.KEYS_FILE, {})
-C:\Users\User\Mail-main\core\subscriptions.py:47:    crypto.encrypt_to(config.KEYS_FILE, data)
-C:\Users\User\Mail-main\core\subscriptions.py:85:    return crypto.decrypt_from(config.SUBS_FILE, {})
-C:\Users\User\Mail-main\core\subscriptions.py:89:    crypto.encrypt_to(config.SUBS_FILE, data)
-
-(venv) C:\Users\User\Mail-main>
+import os
+import json
+import base64
+import hashlib
+import binascii
+from cryptography.fernet import Fernet
+import settings
 
 
+def _fernet() -> Fernet:
+    try:
+        raw = base64.urlsafe_b64decode(settings.ENC_KEY)
+    except (binascii.Error, ValueError) as e:
+        raise ValueError(f"ENC_KEY не base64: {e}")
+    if len(raw) != 32:
+        raise ValueError("ENC_KEY должен быть 32-байтным")
+    return Fernet(settings.ENC_KEY.encode())
 
+
+def encrypt_to(path: str, data) -> None:
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    raw = json.dumps(data, ensure_ascii=False, indent=2).encode("utf-8")
+    tmp = path + ".tmp"
+    with open(tmp, "wb") as f:
+        f.write(_fernet().encrypt(raw))
+    os.replace(tmp, path)
+
+
+def decrypt_from(path: str, default):
+    if not os.path.exists(path):
+        return default
+    try:
+        with open(path, "rb") as f:
+            raw = _fernet().decrypt(f.read())
+        return json.loads(raw.decode("utf-8"))
+    except Exception:
+        return default
+
+
+def hash_key(key: str) -> str:
+    return hashlib.sha256(key.encode("utf-8")).hexdigest()
+
+
+def gen_key() -> str:
+    return base64.urlsafe_b64encode(os.urandom(18)).decode("ascii").rstrip("=")
