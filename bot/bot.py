@@ -536,12 +536,10 @@ async def admin_help_code(msg: Message, state: FSMContext):
     if not entry:
         await msg.answer("❌ Код неверный, истёк или уже использован.")
         return
-    data = await state.get_data()
     target = entry["target_uid"]
     await state.clear()
     await msg.answer(
-        f"✅ Доступ к юзеру {target} открыт на 1 час.\n"
-        f"Его почты и рассылка доступны в админ-панели.",
+        f"✅ Доступ к юзеру {target} открыт на 1 час.",
         reply_markup=admin_panel()
     )
 
