@@ -1,11 +1,11 @@
 import os
-import config
+import settings
 from core import crypto
 
 
 def _path() -> str:
-    os.makedirs(config.DATA_DIR, exist_ok=True)
-    return os.path.join(config.DATA_DIR, "accounts.json.enc")
+    os.makedirs(settings.DATA_DIR, exist_ok=True)
+    return os.path.join(settings.DATA_DIR, "accounts.json.enc")
 
 
 def load_accounts() -> dict:
