@@ -1,0 +1,12 @@
+(venv) C:\Users\User\Mail-main>python run_all.py
+[bot] started pid=9776
+[gui] started pid=9628
+Traceback (most recent call last):
+  File "C:\Users\User\Mail-main\bot\bot.py", line 19, in <module>
+    from bot.keyboards import (
+  File "C:\Users\User\Mail-main\bot\bot.py", line 19, in <module>
+    from bot.keyboards import (
+ModuleNotFoundError: No module named 'bot.keyboards'; 'bot' is not a package
+[bot] exited with code 1
+shutting down...
+
