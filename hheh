@@ -1,1 +1,20 @@
-findstr /s /n "config\." C:\Users\User\Mail-main\core\*.py C:\Users\User\Mail-main\gui\*.py C:\Users\User\Mail-main\bot\*.py
+C:\Users\User\Mail-main\core\accounts.py:7:    os.makedirs(config.DATA_DIR, exist_ok=True)
+C:\Users\User\Mail-main\core\accounts.py:8:    return os.path.join(config.DATA_DIR, "accounts.json.enc")
+C:\Users\User\Mail-main\core\crypto.py:12:        raw = base64.urlsafe_b64decode(config.ENC_KEY)
+C:\Users\User\Mail-main\core\crypto.py:17:    return Fernet(config.ENC_KEY.encode())
+C:\Users\User\Mail-main\core\mailer.py:34:    os.makedirs(config.DATA_DIR, exist_ok=True)
+C:\Users\User\Mail-main\core\mailer.py:35:    return os.path.join(config.DATA_DIR, "stats.json")
+C:\Users\User\Mail-main\core\mailer.py:76:        server = smtplib.SMTP_SSL(host, port, timeout=config.SMTP_TIMEOUT, context=ctx)
+C:\Users\User\Mail-main\core\mailer.py:78:        server = smtplib.SMTP(host, port, timeout=config.SMTP_TIMEOUT)
+C:\Users\User\Mail-main\core\mailer.py:154:        time.sleep(config.SEND_DELAY)
+C:\Users\User\Mail-main\core\subscriptions.py:19:    return crypto.decrypt_from(config.CHANNELS_FILE, [])
+C:\Users\User\Mail-main\core\subscriptions.py:23:    crypto.encrypt_to(config.CHANNELS_FILE, items)
+C:\Users\User\Mail-main\core\subscriptions.py:43:    return crypto.decrypt_from(config.KEYS_FILE, {})
+C:\Users\User\Mail-main\core\subscriptions.py:47:    crypto.encrypt_to(config.KEYS_FILE, data)
+C:\Users\User\Mail-main\core\subscriptions.py:85:    return crypto.decrypt_from(config.SUBS_FILE, {})
+C:\Users\User\Mail-main\core\subscriptions.py:89:    crypto.encrypt_to(config.SUBS_FILE, data)
+
+(venv) C:\Users\User\Mail-main>
+
+
+
